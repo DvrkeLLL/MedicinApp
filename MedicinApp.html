@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d62828" id="tc">
+<title>MedicinApp</title>
+<link rel="icon" type="image/png" href="Icon_MedicinApp.png">
+<link rel="shortcut icon" href="Icon_MedicinApp.png">
+<link rel="apple-touch-icon" href="Icon_MedicinApp.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MedicinApp">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="MedicinApp">
+<style>
+:root{
+  --rojo:#d62828; --rojo-os:#9d1111;
+  --verde:#1fae5b; --verde-os:#0d6b35;
+  --papel:#f6f3ee; --tinta:#1b1b1b;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;user-select:none;-webkit-user-select:none}
+body{background:var(--rojo);transition:background .3s}
+body.ok{background:var(--verde)}
+
+#pantalla{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:24px;touch-action:manipulation}
+#onda{position:fixed;inset:0;background:var(--verde);clip-path:circle(0 at 50% 50%);pointer-events:none;z-index:1}
+#pantalla > *{position:relative;z-index:2}
+
+.icono{width:min(46vw,200px);height:min(46vw,200px);margin-bottom:28px}
+.icono circle{fill:none;stroke:#fff;stroke-width:5;opacity:.9}
+.icono .pastilla{fill:#fff;opacity:.95}
+.icono .check{fill:none;stroke:#fff;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100;opacity:0}
+.icono .pastilla-g{transition:opacity .2s}
+body.ok .icono .pastilla-g{opacity:0}
+body.ok .icono .check{opacity:1;stroke-dashoffset:0;transition:stroke-dashoffset .6s .35s cubic-bezier(.6,.1,.2,1),opacity 0s .35s}
+body.ok .icono circle{animation:latido .7s .1s ease-out}
+@keyframes latido{0%{transform:scale(.8)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.icono circle{transform-origin:50% 50%;transform-box:fill-box}
+
+h1{font-size:clamp(34px,9vw,56px);line-height:1.05;margin:0 0 10px;font-weight:800;letter-spacing:-.02em}
+#sub{font-size:clamp(16px,4.4vw,20px);margin:0;opacity:.9}
+
+#btnGrafico{position:fixed;z-index:5;top:calc(var(--safe-t) + 14px);right:14px;width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.85);background:rgba(0,0,0,.12);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
+#btnGrafico:active{transform:scale(.94)}
+#btnGrafico svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+/* Panel de historial (modo día) */
+#panel{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.2);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;display:flex;align-items:center;justify-content:center;padding:calc(var(--safe-t) + 12px) 12px calc(var(--safe-b) + 12px)}
+#panel.abierto{opacity:1;visibility:visible}
+.hoja{width:100%;max-width:460px;max-height:80%;display:flex;flex-direction:column;background:linear-gradient(180deg,#fffaf0,#eaf7ee);color:#1d2a22;border-radius:28px;box-shadow:0 20px 60px rgba(0,0,0,.35);transform:translateY(60px) scale(.97);transition:transform .38s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+#panel.abierto .hoja{transform:none}
+.cab{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px 20px}
+.cab h2{margin:0;font-size:24px;font-weight:800;letter-spacing:-.01em}
+#cerrar{width:44px;height:44px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.1);font-size:20px;cursor:pointer;color:#1d2a22}
+.cuerpo{flex:1;overflow-y:auto;padding:6px 16px 22px;-webkit-overflow-scrolling:touch}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.tri div{background:#fff;border-radius:18px;padding:14px 8px;text-align:center;box-shadow:0 4px 16px rgba(25,195,125,.16)}
+.tri b{display:block;font-size:28px;letter-spacing:-.02em;color:#12a55a}
+.tri small{font-size:12px;color:#66766c}
+.calbox{background:#fff;border-radius:22px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.mes{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mes strong{font-size:17px;text-transform:capitalize}
+.mes button{width:38px;height:38px;border-radius:50%;border:0;background:#eef5ef;font-size:18px;cursor:pointer;color:#1d2a22}
+.sem,.dias{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.sem span{text-align:center;font-size:12px;color:#7d8a82;padding-bottom:2px}
+.dia{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:#eef2ec;color:#9aa69e}
+.dia.v{background:#19c37d;color:#fff;box-shadow:0 0 12px rgba(25,195,125,.55)}
+.dia.r{background:#fff0f0;color:#d62828;box-shadow:inset 0 0 0 1.5px #ff6b6b}
+.dia.h{outline:2px solid #1d2a22;outline-offset:2px}
+.dia.vacio{background:none;box-shadow:none}
+.leyenda{display:flex;gap:14px;font-size:12px;color:#66766c;margin-top:12px;flex-wrap:wrap}
+.leyenda i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+h3{margin:20px 0 10px;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{background:#fff;border-radius:999px;padding:8px 14px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.chip b{color:#0d8a48;margin-left:6px;font-variant-numeric:tabular-nums}
+#btnMas{width:100%;margin-top:16px;padding:14px;border:0;border-radius:16px;background:#1d2a22;color:#fff;font-size:15px;font-weight:700;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px}
+#btnMas span{display:inline-block;transition:transform .3s}
+#btnMas.abierto span{transform:rotate(180deg)}
+.det{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease}
+.det.abierto{grid-template-rows:1fr}
+.det>div{overflow:hidden}
+.fila{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:14px;padding:13px 14px;margin-top:8px;font-size:15px}
+.fila b{font-variant-numeric:tabular-nums;color:#0d8a48}
+.fila.no b{color:#d62828}
+.fila small{display:block;color:#7d8a82;font-size:12px}
+.vacio-msg{color:#7d8a82;padding:12px 0}
+
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01s!important;animation-duration:.01s!important}}
+</style>
+</head>
+<body>
+
+<div id="pantalla" role="button" tabindex="0" aria-label="Confirmar que tomaste la pastilla">
+  <div id="onda"></div>
+  <svg class="icono" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="44"/>
+    <g class="pastilla-g" transform="rotate(-35 50 50)">
+      <rect class="pastilla" x="28" y="38" width="44" height="24" rx="12"/>
+      <line x1="50" y1="38" x2="50" y2="62" stroke="#d62828" stroke-width="3"/>
+    </g>
+    <path class="check" pathLength="100" d="M30 52 L44 66 L71 36"/>
+  </svg>
+  <h1 id="titulo">Pastilla pendiente</h1>
+  <p id="sub">Toca la pantalla cuando la tomes</p>
+</div>
+
+<button id="btnGrafico" aria-label="Ver historial">
+  <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+</button>
+
+<section id="panel" aria-label="Historial" aria-hidden="true">
+ <div class="hoja">
+  <div class="cab"><h2>Historial</h2><button id="cerrar" aria-label="Cerrar">✕</button></div>
+  <div class="cuerpo">
+    <div class="tri">
+      <div><b id="rachaN">0</b><small>racha</small></div>
+      <div><b id="pctN">0%</b><small>cumplido</small></div>
+      <div><b id="horaN">--:--</b><small>hora media</small></div>
+    </div>
+    <div class="calbox">
+      <div class="mes">
+        <button id="ant" aria-label="Mes anterior">‹</button>
+        <strong id="mesTxt"></strong>
+        <button id="sig" aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="sem"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <div class="dias" id="dias"></div>
+      <div class="leyenda">
+        <span><i style="background:#19c37d"></i>Tomada</span>
+        <span><i style="background:#ff6b6b"></i>No registrada</span>
+        <span><i style="background:#fff;box-shadow:0 0 0 2px #1d2a22"></i>Hoy</span>
+      </div>
+    </div>
+    <h3>Últimos registros</h3>
+    <div class="chips" id="chips"></div>
+    <button id="btnMas" aria-expanded="false">Mostrar más detalle <span>▾</span></button>
+    <div class="det" id="detalle"><div id="detalleLista"></div></div>
+  </div>
+ </div>
+</section>
+
+<script>
+(function(){
+  var KEY_REG='medinapp_registros', KEY_INI='medinapp_inicio', HORA_CAMBIO=6;
+  var $=function(id){return document.getElementById(id)};
+
+  function leer(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
+  function guardar(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+  // "Día lógico": el día cambia a las 6am, no a medianoche
+  function claveDe(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  function hoyClave(){return claveDe(new Date(Date.now()-HORA_CAMBIO*3600*1000))}
+  function horaTxt(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+  function parseClave(k){var p=k.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+
+  var registros=leer(KEY_REG,{});          // { 'YYYY-MM-DD': 'HH:MM' }
+  var inicio=leer(KEY_INI,null);
+  if(!inicio){inicio=hoyClave();guardar(KEY_INI,inicio)}
+
+  var mesVista=parseClave(hoyClave()); mesVista.setDate(1);
+  var ahoraOk=false;
+
+  function pintarEstado(animar,x,y){
+    var ok=!!registros[hoyClave()];
+    $('titulo').textContent=ok?'Pastilla tomada':'Pastilla pendiente';
+    $('sub').textContent=ok?('Registrada a las '+registros[hoyClave()]+'. Se reinicia a las 6:00'):'Toca la pantalla cuando la tomes';
+    $('tc').setAttribute('content',ok?'#1fae5b':'#d62828');
+    if(ok===ahoraOk&&!animar)return;
+    if(ok&&animar){
+      var o=$('onda');
+      o.style.transition='none';
+      o.style.clipPath='circle(0px at '+x+'px '+y+'px)';
+      void o.offsetWidth;
+      var r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y))+20;
+      o.style.transition='clip-path .8s cubic-bezier(.3,.7,.2,1)';
+      o.style.clipPath='circle('+r+'px at '+x+'px '+y+'px)';
+      document.body.classList.add('ok');
+      setTimeout(function(){o.style.transition='none';o.style.clipPath='circle(0px at 50% 50%)'},900);
+      if(navigator.vibrate)navigator.vibrate([40,30,80]);
+    }else{
+      document.body.classList.toggle('ok',ok);
+    }
+    ahoraOk=ok;
+  }
+
+  function confirmar(x,y){
+    var k=hoyClave();
+    if(registros[k]){ // ya está tomada: pequeño pulso, sin cambios
+      var ic=document.querySelector('.icono');
+      ic.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:350});
+      return;
+    }
+    registros[k]=horaTxt(new Date());
+    guardar(KEY_REG,registros);
+    pintarEstado(true,x,y);
+    dibujar();
+  }
+
+  var pant=$('pantalla');
+  pant.addEventListener('pointerdown',function(e){confirmar(e.clientX,e.clientY)});
+  pant.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();confirmar(innerWidth/2,innerHeight/2)}
+  });
+
+  // Historial
+  var MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
+
+  function dibujar(){
+    var hoy=hoyClave(), y=mesVista.getFullYear(), m=mesVista.getMonth();
+    $('mesTxt').textContent=MESES[m]+' '+y;
+    var cont=$('dias'); cont.innerHTML='';
+    var primero=new Date(y,m,1), offset=(primero.getDay()+6)%7, total=new Date(y,m+1,0).getDate();
+    for(var i=0;i<offset;i++){var v=document.createElement('div');v.className='dia vacio';cont.appendChild(v)}
+    for(var d=1;d<=total;d++){
+      var k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var c=document.createElement('div'); c.className='dia'; c.textContent=d;
+      if(registros[k])c.classList.add('v');
+      else if(k<hoy&&k>=inicio)c.classList.add('r');
+      if(k===hoy)c.classList.add('h');
+      cont.appendChild(c);
+    }
+    var claves=Object.keys(registros).sort().reverse();
+    var a=parseClave(inicio),b=parseClave(hoy);
+    var nDias=Math.round((b-a)/86400000)+1;
+    var base=Math.max(nDias-(registros[hoy]?0:1),claves.length,1);
+    $('pctN').textContent=Math.min(100,Math.round(claves.length/base*100))+'%';
+    // racha: días seguidos terminando hoy (si ya la tomó) o ayer
+    var r=0,f=parseClave(hoy);
+    if(!registros[hoy])f.setDate(f.getDate()-1);
+    while(registros[claveDe(f)]){r++;f.setDate(f.getDate()-1)}
+    $('rachaN').textContent=r;
+    // hora media
+    if(claves.length){
+      var sum=claves.reduce(function(t,k){var p=registros[k].split(':');return t+ +p[0]*60+ +p[1]},0);
+      var av=Math.round(sum/claves.length);
+      $('horaN').textContent=String(Math.floor(av/60)).padStart(2,'0')+':'+String(av%60).padStart(2,'0');
+    }else $('horaN').textContent='--:--';
+    // chips
+    var ch=$('chips'); ch.innerHTML='';
+    if(!claves.length)ch.innerHTML='<span class="vacio-msg">Aún no hay registros.</span>';
+    claves.slice(0,8).forEach(function(k){
+      var fd=parseClave(k), e=document.createElement('span'); e.className='chip';
+      e.innerHTML=fd.getDate()+' '+MESES[fd.getMonth()].slice(0,3)+'<b>'+registros[k]+'</b>';
+      ch.appendChild(e);
+    });
+    // detalle completo (incluye días sin registro)
+    var dl=$('detalleLista'); dl.innerHTML='';
+    var g=parseClave(hoy);
+    for(var n=0;n<nDias;n++){
+      var kk=claveDe(g), tom=registros[kk];
+      if(tom||kk!==hoy){
+        var row=document.createElement('div'); row.className='fila'+(tom?'':' no');
+        row.innerHTML='<div>'+DIAS[g.getDay()]+' '+g.getDate()+' de '+MESES[g.getMonth()]+'<small>'+g.getFullYear()+'</small></div><b>'+(tom||'Sin registro')+'</b>';
+        dl.appendChild(row);
+      }
+      g.setDate(g.getDate()-1);
+    }
+  }
+
+  $('btnMas').addEventListener('click',function(){
+    var ab=!$('detalle').classList.contains('abierto');
+    $('detalle').classList.toggle('abierto',ab);
+    this.classList.toggle('abierto',ab);
+    this.setAttribute('aria-expanded',ab);
+    this.firstChild.nodeValue=ab?'Ocultar detalle ':'Mostrar más detalle ';
+  });
+
+  function abrir(v){
+    var p=$('panel');
+    p.classList.toggle('abierto',v);
+    p.setAttribute('aria-hidden',v?'false':'true');
+    if(v){mesVista=parseClave(hoyClave());mesVista.setDate(1);dibujar()}
+  }
+  $('btnGrafico').addEventListener('click',function(e){e.stopPropagation();abrir(true)});
+  $('cerrar').addEventListener('click',function(){abrir(false)});
+  $('panel').addEventListener('click',function(e){if(e.target===this)abrir(false)});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')abrir(false)});
+  $('ant').addEventListener('click',function(){mesVista.setMonth(mesVista.getMonth()-1);dibujar()});
+  $('sig').addEventListener('click',function(){mesVista.setMonth(mesVista.getMonth()+1);dibujar()});
+
+  // Revisa si cambió el día lógico (6am)
+  var ultimaClave=hoyClave();
+  function vigilar(){
+    var k=hoyClave();
+    if(k!==ultimaClave){ultimaClave=k;pintarEstado(false);dibujar()}
+  }
+  setInterval(vigilar,15000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)vigilar()});
+
+  pintarEstado(false); dibujar();
+})();
+</script>
+</body>
+</html>

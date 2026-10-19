@@ -1,0 +1,15 @@
+{
+  "name": "MedicinApp",
+  "short_name": "MedicinApp",
+  "description": "Recordatorio simple para saber si ya tomaste tu pastilla",
+  "start_url": "MedicinApp.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#d62828",
+  "theme_color": "#d62828",
+  "icons": [
+    { "src": "Icon_MedicinApp.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "Icon_MedicinApp.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
